@@ -1,0 +1,130 @@
+{
+  "title": "Spring Boot - Performance & Health",
+  "tags": ["springboot", "prometheus", "loki", "health"],
+  "timezone": "browser",
+  "schemaVersion": 42,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Uptime (segundos)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf1fe9frjzdvkf"
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"springboot\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência HTTP (p95)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf1fe9frjzdvkf"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"springboot\"}[1m])) by (le))",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 3 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de Erro HTTP 5xx",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf1fe9frjzdvkf"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"springboot\", status=~\"5..\"}[1m]))",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "req/s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 3 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Uso de Memória (JVM)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf1fe9frjzdvkf"
+      },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"springboot\", area=\"heap\"}",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 9 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Uso de CPU (JVM Process)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf1fe9frjzdvkf"
+      },
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=\"springboot\"}",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 9 }
+    },
+    {
+      "type": "logs",
+      "title": "Logs de Erro (Loki)",
+      "datasource": {
+        "type": "loki",
+        "uid": "bf1fdg6buk4xsd"
+      },
+      "targets": [
+        {
+          "expr": "{job=\"springboot\"} |= \"ERROR\"",
+          "refId": "F"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 15 }
+    }
+  ]
+}

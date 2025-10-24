@@ -1,0 +1,209 @@
+{
+  "id": null,
+  "title": "Spring Boot Observability v2.0 - Prometheus + Loki",
+  "uid": "springboot-observability-v2",
+  "version": 1,
+  "schemaVersion": 38,
+  "tags": ["springboot", "prometheus", "loki", "observability"],
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "application",
+        "label": "Application",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(application)",
+        "current": { "text": "my-spring-app", "value": "my-spring-app" }
+      },
+      {
+        "name": "uri",
+        "label": "Endpoint",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_server_requests_seconds_count{application=\"$application\"}, uri)",
+        "current": { "text": "/hello", "value": "/hello" }
+      },
+      {
+        "name": "status",
+        "label": "HTTP Status",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_server_requests_seconds_count{application=\"$application\"}, status)"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Total Requests",
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{application=\"$application\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (%)",
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "value": 5, "color": "orange" }, { "value": 10, "color": "red" }] },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "Avg Latency (ms)",
+      "targets": [
+        {
+          "expr": "1000 * (sum(rate(http_server_requests_seconds_sum{application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "value": 300, "color": "orange" }, { "value": 800, "color": "red" }] },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "CPU Usage (%)",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{application=\"$application\"}[1m]) * 100",
+          "refId": "A"
+        }
+      ],
+      "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }, { "value": 60, "color": "orange" }, { "value": 85, "color": "red" }] },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 }
+    },
+    {
+      "type": "row",
+      "title": "Endpoint Metrics",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency by Endpoint ($uri)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{uri=\"$uri\",application=\"$application\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per Second ($uri)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 }
+    },
+    {
+      "type": "row",
+      "title": "System Resources",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "collapsed": false
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Memory (Heap Used MB)",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"$application\",area=\"heap\"} / 1024 / 1024",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Threads",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{application=\"$application\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 }
+    },
+    {
+      "type": "row",
+      "title": "Logs & Correlations",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "collapsed": false
+    },
+    {
+      "type": "logs",
+      "title": "Application Logs ($application)",
+      "targets": [
+        {
+          "expr": "{app=\"$application\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
+    },
+    {
+      "type": "logs",
+      "title": "Error & Exception Logs",
+      "targets": [
+        {
+          "expr": "{app=\"$application\"} |~ \"ERROR|Exception|WARN\"",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 }
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "type": "dashboard",
+        "name": "Correlated Errors",
+        "enable": true,
+        "datasource": "Loki",
+        "expr": "{app=\"$application\"} |~ \"ERROR|Exception\""
+      }
+    ]
+  },
+  "alerting": {
+    "rules": [
+      {
+        "uid": "alert-latency",
+        "title": "High Latency",
+        "condition": "avg() of query(A, 5m, now) > 800",
+        "datasource": "Prometheus",
+        "query": "1000 * (sum(rate(http_server_requests_seconds_sum{application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
+        "for": "2m",
+        "severity": "critical"
+      },
+      {
+        "uid": "alert-error-rate",
+        "title": "Error Rate Above 10%",
+        "condition": "avg() of query(A, 5m, now) > 10",
+        "datasource": "Prometheus",
+        "query": "100 * (sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
+        "for": "1m",
+        "severity": "warning"
+      }
+    ]
+  }
+}

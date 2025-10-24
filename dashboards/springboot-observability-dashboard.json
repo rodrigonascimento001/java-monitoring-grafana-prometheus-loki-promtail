@@ -1,0 +1,181 @@
+{
+  "id": null,
+  "title": "Spring Boot Observability - Prometheus + Loki",
+  "uid": "springboot-observability",
+  "version": 1,
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Application Overview",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Uptime (seconds)",
+      "targets": [
+        {
+          "expr": "process_uptime_seconds{application=\"my-spring-app\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "Total Requests",
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{application=\"my-spring-app\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (%)",
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"my-spring-app\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"my-spring-app\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 }
+    },
+    {
+      "type": "stat",
+      "title": "Avg Latency (ms)",
+      "targets": [
+        {
+          "expr": "1000 * (sum(rate(http_server_requests_seconds_sum{application=\"my-spring-app\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"my-spring-app\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 }
+    },
+    {
+      "type": "row",
+      "title": "Endpoint /hello Metrics",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency per request (/hello)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{uri=\"/hello\",application=\"my-spring-app\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"/hello\",application=\"my-spring-app\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per second (/hello)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=\"/hello\",application=\"my-spring-app\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 }
+    },
+    {
+      "type": "row",
+      "title": "System Metrics (JVM / CPU / Memory)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Memory Used (MB)",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"my-spring-app\",area=\"heap\"} / 1024 / 1024",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Usage (%)",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{application=\"my-spring-app\"}[1m]) * 100",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Threads",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{application=\"my-spring-app\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 }
+    },
+    {
+      "type": "timeseries",
+      "title": "GC Time (seconds)",
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"my-spring-app\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 }
+    },
+    {
+      "type": "row",
+      "title": "Application Logs (Loki)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 }
+    },
+    {
+      "type": "logs",
+      "title": "Logs (All)",
+      "targets": [
+        {
+          "expr": "{app=\"my-spring-app\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 }
+    },
+    {
+      "type": "logs",
+      "title": "Error Logs",
+      "targets": [
+        {
+          "expr": "{app=\"my-spring-app\"} |~ \"ERROR|Exception|WARN\"",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "application",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(application)",
+        "current": { "text": "my-spring-app", "value": "my-spring-app" }
+      }
+    ]
+  },
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  }
+}
