@@ -19,6 +19,7 @@ public final class MonitoringServiceImpl implements MonitoringService {
 
     @Override
     public String checkCustomer(Customer customer) {
+        log.info("checkCustomer initialized");
         if("mariana".equalsIgnoreCase(customer.name())){
             log.error("parameter name entered is not expected");
             throw new IllegalArgumentException("parameter name entered is not expected");
