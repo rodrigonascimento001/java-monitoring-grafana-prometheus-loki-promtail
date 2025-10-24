@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  springboot:
+    build: .
+    container_name: springboot
+    ports:
+      - "8080:8080"
+    volumes:
+      - springboot-logs:/var/log
+    environment:
+      - JAVA_OPTS=
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:2.9.0
+    user: "0"
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki:/etc/loki
+      - loki-wal:/wal
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - springboot-logs:/var/log
+      - ./promtail:/etc/promtail
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+      - springboot
+
+volumes:
+  grafana-storage:
+  loki-wal:
+  springboot-logs:
