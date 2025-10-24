@@ -1,0 +1,199 @@
+{
+  "id": null,
+  "title": "Spring Boot Observability v3.0 - Multi-Service (Prometheus + Loki)",
+  "uid": "springboot-observability-v3",
+  "version": 1,
+  "schemaVersion": 38,
+  "tags": ["springboot", "prometheus", "loki", "observability", "multi-service"],
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(namespace)",
+        "current": { "text": "default", "value": "default" }
+      },
+      {
+        "name": "application",
+        "label": "Application",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_server_requests_seconds_count{namespace=\"$namespace\"}, application)",
+        "current": { "text": "my-spring-app", "value": "my-spring-app" }
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_server_requests_seconds_count{namespace=\"$namespace\",application=\"$application\"}, instance)"
+      },
+      {
+        "name": "uri",
+        "label": "Endpoint",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(http_server_requests_seconds_count{namespace=\"$namespace\",application=\"$application\"}, uri)",
+        "current": { "text": "/hello", "value": "/hello" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Cluster Overview ($namespace)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per Service",
+      "targets": [
+        {
+          "expr": "sum by(application) (rate(http_server_requests_seconds_count{namespace=\"$namespace\"}[1m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Average Latency per Service (ms)",
+      "targets": [
+        {
+          "expr": "1000 * sum by(application) (rate(http_server_requests_seconds_sum{namespace=\"$namespace\"}[1m]) / rate(http_server_requests_seconds_count{namespace=\"$namespace\"}[1m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 }
+    },
+    {
+      "type": "row",
+      "title": "Service Deep Dive ($application)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per Second ($uri)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"$application\",namespace=\"$namespace\",uri=\"$uri\"}[1m])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency ($uri)",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{application=\"$application\",namespace=\"$namespace\",uri=\"$uri\"}[1m]) / rate(http_server_requests_seconds_count{application=\"$application\",namespace=\"$namespace\",uri=\"$uri\"}[1m]) * 1000",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate (%)",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"$application\",namespace=\"$namespace\"}[1m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\",namespace=\"$namespace\"}[1m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
+    },
+    {
+      "type": "row",
+      "title": "Resources ($application / $instance)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Usage (%)",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{application=\"$application\",namespace=\"$namespace\",instance=\"$instance\"}[1m]) * 100",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 17 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap Memory (MB)",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"$application\",namespace=\"$namespace\",instance=\"$instance\",area=\"heap\"} / 1024 / 1024",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 17 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Live Threads",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{application=\"$application\",namespace=\"$namespace\",instance=\"$instance\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 17 }
+    },
+    {
+      "type": "row",
+      "title": "Logs ($application)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 }
+    },
+    {
+      "type": "logs",
+      "title": "All Logs",
+      "targets": [
+        {
+          "expr": "{namespace=\"$namespace\",app=\"$application\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 }
+    },
+    {
+      "type": "logs",
+      "title": "Errors & Exceptions",
+      "targets": [
+        {
+          "expr": "{namespace=\"$namespace\",app=\"$application\"} |~ \"ERROR|Exception|WARN\"",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 }
+    }
+  ],
+  "alerting": {
+    "rules": [
+      {
+        "uid": "alert-cpu-high",
+        "title": "High CPU Usage",
+        "condition": "avg() of query(A, 2m, now) > 85",
+        "datasource": "Prometheus",
+        "query": "rate(process_cpu_seconds_total{namespace=\"$namespace\",application=\"$application\"}[1m]) * 100",
+        "for": "1m",
+        "severity": "critical"
+      },
+      {
+        "uid": "alert-latency-high",
+        "title": "High Latency (> 1s)",
+        "condition": "avg() of query(A, 5m, now) > 1000",
+        "datasource": "Prometheus",
+        "query": "1000 * (sum(rate(http_server_requests_seconds_sum{namespace=\"$namespace\",application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{namespace=\"$namespace\",application=\"$application\"}[5m])))",
+        "for": "2m",
+        "severity": "warning"
+      }
+    ]
+  }
+}
