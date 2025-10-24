@@ -19,30 +19,13 @@
   "templating": {
     "list": [
       {
-        "name": "datasource_prometheus",
-        "label": "Prometheus Datasource",
-        "type": "datasource",
-        "query": "prometheus",
-        "current": {
-          "text": "Prometheus",
-          "value": "Prometheus"
-        }
-      },
-      {
-        "name": "datasource_loki",
-        "label": "Loki Datasource",
-        "type": "datasource",
-        "query": "loki",
-        "current": {
-          "text": "Loki",
-          "value": "Loki"
-        }
-      },
-      {
         "name": "application",
         "label": "Application",
         "type": "query",
-        "datasource": "Prometheus",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "bf1fe9frjzdvkf"
+        },
         "query": "label_values(application)",
         "current": {
           "text": "my-spring-app",
@@ -53,7 +36,10 @@
         "name": "uri",
         "label": "Endpoint",
         "type": "query",
-        "datasource": "Prometheus",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "bf1fe9frjzdvkf"
+        },
         "query": "label_values(http_server_requests_seconds_count{application=\"$application\"}, uri)",
         "current": {
           "text": "/hello",
@@ -66,12 +52,7 @@
     {
       "type": "row",
       "title": "Overview",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
     },
     {
@@ -81,15 +62,10 @@
         {
           "expr": "sum(increase(http_server_requests_seconds_count{application=\"$application\"}[5m]))",
           "refId": "A",
-          "datasource": "${datasource_prometheus}"
+          "datasource": { "type": "prometheus", "uid": "bf1fe9frjzdvkf" }
         }
       ],
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      }
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 }
     },
     {
       "type": "stat",
@@ -98,31 +74,18 @@
         {
           "expr": "100 * (sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
           "refId": "A",
-          "datasource": "${datasource_prometheus}"
+          "datasource": { "type": "prometheus", "uid": "bf1fe9frjzdvkf" }
         }
       ],
       "thresholds": {
         "mode": "absolute",
         "steps": [
-          {
-            "color": "green"
-          },
-          {
-            "value": 5,
-            "color": "orange"
-          },
-          {
-            "value": 10,
-            "color": "red"
-          }
+          { "color": "green" },
+          { "value": 5,   "color": "orange" },
+          { "value": 10,  "color": "red" }
         ]
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      }
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 }
     },
     {
       "type": "stat",
@@ -131,31 +94,18 @@
         {
           "expr": "1000 * (sum(rate(http_server_requests_seconds_sum{application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
           "refId": "A",
-          "datasource": "${datasource_prometheus}"
+          "datasource": { "type": "prometheus", "uid": "bf1fe9frjzdvkf" }
         }
       ],
       "thresholds": {
         "mode": "absolute",
         "steps": [
-          {
-            "color": "green"
-          },
-          {
-            "value": 300,
-            "color": "orange"
-          },
-          {
-            "value": 800,
-            "color": "red"
-          }
+          { "color": "green" },
+          { "value": 300,   "color": "orange" },
+          { "value": 800,   "color": "red" }
         ]
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      }
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 }
     },
     {
       "type": "stat",
@@ -164,199 +114,82 @@
         {
           "expr": "rate(process_cpu_seconds_total{application=\"$application\"}[1m]) * 100",
           "refId": "A",
-          "datasource": "${datasource_prometheus}"
+          "datasource": { "type": "prometheus",   "uid":"bf1fe9frjzdvkf" }
         }
       ],
       "thresholds": {
-        "mode": "absolute",
-        "steps": [
-          {
-            "color": "green"
-          },
-          {
-            "value": 60,
-            "color": "orange"
-          },
-          {
-            "value": 85,
-            "color": "red"
-          }
+        "mode":"absolute",
+        "steps":[
+          {  	"color":"green" },
+          {  	"value":60,"color":"orange" },
+          {  	"value":85,"color":"red" }
         ]
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+      "gridPos":{"h":4,"w":6,"x":18,"y":1}
+    },
+    {
+      "type":"row","title":"Endpoint /hello Metrics","gridPos":{"h":1,"w":24,"x":0,"y":5},"collapsed":false
+    },
+    {
+      "type":"timeseries","title":"Latency per request ($uri)","targets":[
+      {
+        "expr":"rate(http_server_requests_seconds_sum{uri=\"$uri\",application=\"$application\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m]) * 1000",
+        "refId":"A","datasource":{"type":"prometheus","uid":"bf1fe9frjzdvkf"}
       }
+    ],
+      "gridPos":{"h":8,"w":12,"x":0,"y":6}
     },
     {
-      "type": "row",
-      "title": "Endpoint /hello Metrics",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "collapsed": false
-    },
-    {
-      "type": "timeseries",
-      "title": "Latency per request ($uri)",
-      "targets": [
-        {
-          "expr": "rate(http_server_requests_seconds_sum{uri=\"$uri\",application=\"$application\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m]) * 1000",
-          "refId": "A",
-          "datasource": "${datasource_prometheus}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
+      "type":"timeseries","title":"Requests per second ($uri)","targets":[
+      {
+        "expr":"rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m])",
+        "refId":"A","datasource":{"type":"prometheus","uid":"bf1fe9frjzdvkf"}
       }
+    ],
+      "gridPos":{"h":8,"w":12,"x":12,"y":6}
     },
     {
-      "type": "timeseries",
-      "title": "Requests per second ($uri)",
-      "targets": [
-        {
-          "expr": "rate(http_server_requests_seconds_count{uri=\"$uri\",application=\"$application\"}[1m])",
-          "refId": "A",
-          "datasource": "${datasource_prometheus}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
+      "type":"row","title":"System Metrics (JVM)","gridPos":{"h":1,"w":24,"x":0,"y":14},"collapsed":false
+    },
+    {
+      "type":"timeseries","title":"JVM Heap Used (MB)","targets":[
+      {
+        "expr":"jvm_memory_used_bytes{application=\"$application\",area=\"heap\"} / 1024 / 1024",
+        "refId":"A","datasource":{"type":"prometheus","uid":"bf1fe9frjzdvkf"}
       }
+    ],
+      "gridPos":{"h":8,"w":12,"x":0,"y":15}
     },
     {
-      "type": "row",
-      "title": "System Metrics (JVM)",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "collapsed": false
-    },
-    {
-      "type": "timeseries",
-      "title": "JVM Heap Used (MB)",
-      "targets": [
-        {
-          "expr": "jvm_memory_used_bytes{application=\"$application\",area=\"heap\"} / 1024 / 1024",
-          "refId": "A",
-          "datasource": "${datasource_prometheus}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 15
+      "type":"timeseries","title":"Live Threads","targets":[
+      {
+        "expr":"jvm_threads_live_threads{application=\"$application\"}",
+        "refId":"A","datasource":{"type":"prometheus","uid":"bf1fe9frjzdvkf"}
       }
+    ],
+      "gridPos":{"h":8,"w":12,"x":12,"y":15}
     },
     {
-      "type": "timeseries",
-      "title": "Live Threads",
-      "targets": [
-        {
-          "expr": "jvm_threads_live_threads{application=\"$application\"}",
-          "refId": "A",
-          "datasource": "${datasource_prometheus}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 15
+      "type":"row","title":"Logs (Loki)","gridPos":{"h":1,"w":24,"x":0,"y":23},"collapsed":false
+    },
+    {
+      "type":"logs","title":"Application Logs (all)","targets":[
+      {
+        "expr":"{app=\"$application\"}",
+        "refId":"A","datasource":{"type":"loki","uid":"bf1fdg6buk4xsd"}
       }
+    ],
+      "gridPos":{"h":8,"w":12,"x":0,"y":24}
     },
     {
-      "type": "row",
-      "title": "Logs (Loki)",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 23
-      },
-      "collapsed": false
-    },
-    {
-      "type": "logs",
-      "title": "Application Logs (all)",
-      "targets": [
-        {
-          "expr": "{app=\"$application\"}",
-          "refId": "A",
-          "datasource": "${datasource_loki}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 24
+      "type":"logs","title":"Error Logs (ERROR|Exception|WARN)","targets":[
+      {
+        "expr":"{app=\"$application\"} |~ \"ERROR|Exception|WARN\"",
+        "refId":"A","datasource":{"type":"loki","uid":"bf1fdg6buk4xsd"}
       }
-    },
-    {
-      "type": "logs",
-      "title": "Error Logs (ERROR|Exception|WARN)",
-      "targets": [
-        {
-          "expr": "{app=\"$application\"} |~ \"ERROR|Exception|WARN\"",
-          "refId": "A",
-          "datasource": "${datasource_loki}"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      }
+    ],
+      "gridPos":{"h":8,"w":12,"x":12,"y":24}
     }
-  ],
-  "annotations": {
-    "list": [
-      {
-        "type": "dashboard",
-        "name": "Errors (Loki)",
-        "enable": true,
-        "datasource": "${datasource_loki}",
-        "expr": "{app=\"$application\"} |~ \"ERROR|Exception\""
-      }
-    ]
-  },
-  "alerting": {
-    "rules": [
-      {
-        "uid": "alert-latency-800ms",
-        "title": "High Latency > 800ms",
-        "condition": "avg() of query(A, 5m, now) > 800",
-        "datasource": "${datasource_prometheus}",
-        "query": "1000 * (sum(rate(http_server_requests_seconds_sum{application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
-        "for": "2m",
-        "severity": "critical"
-      },
-      {
-        "uid": "alert-error-rate-10",
-        "title": "Error Rate > 10%",
-        "condition": "avg() of query(A, 5m, now) > 10",
-        "datasource": "${datasource_prometheus}",
-        "query": "100 * (sum(rate(http_server_requests_seconds_count{status!~\"2..\",application=\"$application\"}[5m])) / sum(rate(http_server_requests_seconds_count{application=\"$application\"}[5m])))",
-        "for": "1m",
-        "severity": "warning"
-      }
-    ]
-  }
+  ]
+
 }
